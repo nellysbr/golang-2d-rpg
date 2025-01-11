@@ -12,16 +12,17 @@ import (
 )
 
 type Game struct {
-	player       *entities.Player
-	enemies      []*entities.Enemy
-	experience   []*entities.Coin
-	tilemapJson  *entities.TilemapJson
+	player      *entities.Player
+	enemies     []*entities.Enemy
+	experience  []*entities.Coin
+	tilemapJson *entities.TilemapJSON
+	tilesets    []entities.Tileset
+
 	tilemapImage *ebiten.Image
 	cam          *utils.Camera
 }
 
 func (g *Game) Update() error {
-
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
 		g.player.X -= 2
 	}
@@ -62,29 +63,33 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	opts := ebiten.DrawImageOptions{}
 
-	for _, layer := range g.tilemapJson.Layers {
-		for i, id := range layer.Data {
-
-			x := i % layer.Width
-			y := i / layer.Width
+	for layerIndex, layer := range g.tilemapJson.Layers {
+		for index, id := range layer.Data {
+			x := index % layer.Width
+			y := index / layer.Width
 
 			x *= 16
 			y *= 16
 
-			srcX := (id - 1) % 22
-			srcY := (id - 1) / 22
+			if layerIndex >= len(g.tilesets) {
+				log.Printf("Warning: Layer index %d is out of range for tilesets", layerIndex)
+				continue
+			}
 
+			img := g.tilesets[layerIndex].Img(id)
+			if img == nil {
+				continue // Skip this tile if the image is nil
+			}
+
+			opts.GeoM.Reset()
 			opts.GeoM.Translate(float64(x), float64(y))
 			opts.GeoM.Translate(g.cam.X, g.cam.Y)
 
-			screen.DrawImage(
-				g.tilemapImage.SubImage(image.Rect(srcX, srcY, srcX+16, srcY+16)).(*ebiten.Image),
-				&opts,
-			)
-			opts.GeoM.Reset()
+			screen.DrawImage(img, &opts)
 		}
 	}
 
+	opts.GeoM.Reset()
 	opts.GeoM.Translate(g.player.X, g.player.Y)
 	opts.GeoM.Translate(g.cam.X, g.cam.Y)
 
@@ -92,30 +97,25 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		image.Rect(0, 0, 16, 16),
 	).(*ebiten.Image), &opts)
 
-	opts.GeoM.Reset()
-
 	for _, sprite := range g.enemies {
+		opts.GeoM.Reset()
 		opts.GeoM.Translate(sprite.X, sprite.Y)
 		opts.GeoM.Translate(g.cam.X, g.cam.Y)
 
 		screen.DrawImage(sprite.Image.SubImage(
 			image.Rect(0, 0, 16, 16),
 		).(*ebiten.Image), &opts)
-
-		opts.GeoM.Reset()
 	}
 
 	for _, sprite := range g.experience {
+		opts.GeoM.Reset()
 		opts.GeoM.Translate(sprite.X, sprite.Y)
 		opts.GeoM.Translate(g.cam.X, g.cam.Y)
 
 		screen.DrawImage(sprite.Image.SubImage(
 			image.Rect(0, 0, 16, 16),
 		).(*ebiten.Image), &opts)
-
-		opts.GeoM.Reset()
 	}
-
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -142,12 +142,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tilemapImage, _, err := ebitenutil.NewImageFromFile("assets/maps/TilesetFloor.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tilemapJson, err := entities.NewTilemapJson("assets/maps/spawn.json")
+	mapPath := "assets/maps/spawnMap.json"
+	tilemapJson, err := entities.NewTilemapJSON(mapPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -165,7 +161,12 @@ func main() {
 		PlayerClass: rangedClass,
 	}
 
-	// Criação do jogo
+	tilesets, err := tilemapJson.GenTilesets(mapPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Loaded %d tilesets", len(tilesets))
+
 	game := Game{
 		player: player,
 		enemies: []*entities.Enemy{
@@ -190,12 +191,11 @@ func main() {
 				AmtXp: 100,
 			},
 		},
-		tilemapJson:  tilemapJson,
-		tilemapImage: tilemapImage,
-		cam:          utils.NewCamera(0, 0),
+		tilemapJson: tilemapJson,
+		tilesets:    tilesets,
+		cam:         utils.NewCamera(0, 0),
 	}
 
-	// Log para testar o alcance do ataque
 	log.Printf("Player Class: %s, Attack Range: %.2f\n", player.PlayerClass.ClassName(), player.PlayerClass.AttackRange())
 
 	if err := ebiten.RunGame(&game); err != nil {

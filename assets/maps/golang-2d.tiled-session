@@ -1,0 +1,60 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "spawnMap.json",
+    "expandedProjectPaths": [
+        "tilesets",
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "buildings/houses.json": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "spawnMap.json": {
+            "scale": 1,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": -285.5,
+                "y": 279
+            }
+        },
+        "tilesets/TilesetFloor.json": {
+            "dynamicWrapping": false,
+            "scaleInDock": 2,
+            "scaleInEditor": 1
+        },
+        "tilesets/TilesetFloor.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        }
+    },
+    "last.externalTilesetPath": "D:/golang-2d-rpg/assets/maps",
+    "last.imagePath": "D:/golang-2d-rpg/assets/maps/buildings",
+    "map.height": 80,
+    "map.lastUsedFormat": "json",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 100,
+    "openFiles": [
+        "spawnMap.json",
+        "tilesets/TilesetFloor.json",
+        "buildings/houses.json"
+    ],
+    "project": "golang-2d.tiled-project",
+    "recentFiles": [
+        "spawnMap.json",
+        "buildings/houses.json",
+        "tilesets/TilesetFloor.json"
+    ],
+    "tileset.lastUsedFormat": "json",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    },
+    "tileset.type": 1
+}
