@@ -2,10 +2,10 @@ package entities
 
 import (
 	"encoding/json"
+	"golang-2d-rpg/utils"
 	"image"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -85,7 +85,7 @@ func NewTileset(path string, gid int) (Tileset, error) {
 		dynTileset.imgs = make([]*ebiten.Image, 0)
 
 		for _, tileJSON := range dynTilesetJSON.Tiles {
-			tileJSONPath := resolveTilesetPath(path, tileJSON.Path)
+			tileJSONPath := utils.ResolveTilesetPath(path, tileJSON.Path)
 			log.Printf("Loading tile image from: %s", tileJSONPath)
 			img, _, err := ebitenutil.NewImageFromFile(tileJSONPath)
 			if err != nil {
@@ -106,7 +106,7 @@ func NewTileset(path string, gid int) (Tileset, error) {
 
 	uniformTileset := UniformTileset{}
 
-	tileJSONPath := resolveTilesetPath(path, uniformTilesetJSON.Path)
+	tileJSONPath := utils.ResolveTilesetPath(path, uniformTilesetJSON.Path)
 	log.Printf("Loading tileset image from: %s", tileJSONPath)
 	img, _, err := ebitenutil.NewImageFromFile(tileJSONPath)
 	if err != nil {
@@ -118,11 +118,4 @@ func NewTileset(path string, gid int) (Tileset, error) {
 
 	log.Printf("Created UniformTileset with image: %s", tileJSONPath)
 	return &uniformTileset, nil
-}
-
-func resolveTilesetPath(basePath, relativePath string) string {
-	if filepath.IsAbs(relativePath) {
-		return relativePath
-	}
-	return filepath.Join(filepath.Dir(basePath), relativePath)
 }

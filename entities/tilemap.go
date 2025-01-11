@@ -2,8 +2,8 @@ package entities
 
 import (
 	"encoding/json"
+	"golang-2d-rpg/utils"
 	"os"
-	"path/filepath"
 )
 
 type TilemapLayerJSON struct {
@@ -22,7 +22,7 @@ func (t *TilemapJSON) GenTilesets(mapPath string) ([]Tileset, error) {
 	tilesets := make([]Tileset, 0)
 
 	for _, tilesetData := range t.Tilesets {
-		tilesetPath := resolveTilesetPath(mapPath, tilesetData["source"].(string))
+		tilesetPath := utils.ResolveTilesetPath(mapPath, tilesetData["source"].(string))
 		tileset, err := NewTileset(tilesetPath, int(tilesetData["firstgid"].(float64)))
 		if err != nil {
 			return nil, err
@@ -47,11 +47,4 @@ func NewTilemapJSON(filepath string) (*TilemapJSON, error) {
 	}
 
 	return &tilemapJSON, nil
-}
-
-func resolveTilesetPath(basePath, relativePath string) string {
-	if filepath.IsAbs(relativePath) {
-		return relativePath
-	}
-	return filepath.Join(filepath.Dir(basePath), relativePath)
 }
