@@ -17,9 +17,7 @@ type Game struct {
 	experience  []*entities.Coin
 	tilemapJson *entities.TilemapJSON
 	tilesets    []entities.Tileset
-
-	tilemapImage *ebiten.Image
-	cam          *utils.Camera
+	cam         *utils.Camera
 }
 
 func (g *Game) Update() error {
@@ -63,22 +61,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	opts := ebiten.DrawImageOptions{}
 
-	for layerIndex, layer := range g.tilemapJson.Layers {
+	for _, layer := range g.tilemapJson.Layers {
 		for index, id := range layer.Data {
+			if id == 0 {
+				continue
+			}
+
 			x := index % layer.Width
 			y := index / layer.Width
 
 			x *= 16
 			y *= 16
 
-			if layerIndex >= len(g.tilesets) {
-				log.Printf("Warning: Layer index %d is out of range for tilesets", layerIndex)
-				continue
+			var img *ebiten.Image
+			for _, tileset := range g.tilesets {
+				img = tileset.Img(id)
+				if img != nil {
+					break
+				}
 			}
 
-			img := g.tilesets[layerIndex].Img(id)
 			if img == nil {
-				continue // Skip this tile if the image is nil
+				continue
 			}
 
 			opts.GeoM.Reset()
@@ -166,6 +170,15 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("Loaded %d tilesets", len(tilesets))
+
+	for i, tileset := range tilesets {
+		switch t := tileset.(type) {
+		case *entities.UniformTileset:
+			log.Printf("Tileset %d: UniformTileset with gid %d", i, t.GetGID())
+		case *entities.DynTileset:
+			log.Printf("Tileset %d: DynTileset with gid %d and %d images", i, t.GetGID(), t.GetImageCount())
+		}
+	}
 
 	game := Game{
 		player: player,

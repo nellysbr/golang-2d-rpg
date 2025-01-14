@@ -14,6 +14,7 @@ import (
 
 type Tileset interface {
 	Img(id int) *ebiten.Image
+	GetGID() int
 }
 
 type UniformTilesetJSON struct {
@@ -25,11 +26,22 @@ type UniformTileset struct {
 	gid int
 }
 
-func (u *UniformTileset) Img(id int) *ebiten.Image {
-	id -= u.gid
+func (u *UniformTileset) GetGID() int {
+	return u.gid
+}
 
-	srcX := id % 22
-	srcY := id / 22
+func (u *UniformTileset) Img(id int) *ebiten.Image {
+	if id == 0 {
+		return nil // Retorna nil para tiles vazios (ID 0)
+	}
+	adjustedID := id - u.gid
+	if adjustedID < 0 {
+		log.Printf("Warning: Tile ID %d is less than gid %d", id, u.gid)
+		return nil
+	}
+
+	srcX := adjustedID % 22
+	srcY := adjustedID / 22
 
 	srcX *= 16
 	srcY *= 16
@@ -57,13 +69,28 @@ type DynTileset struct {
 	gid  int
 }
 
+func (d *DynTileset) GetGID() int {
+	return d.gid
+}
+
+func (d *DynTileset) GetImageCount() int {
+	return len(d.imgs)
+}
+
 func (d *DynTileset) Img(id int) *ebiten.Image {
-	id -= d.gid
-	if id < 0 || id >= len(d.imgs) {
-		log.Printf("Warning: Tile ID %d (original: %d) is out of range for DynTileset", id, id+d.gid)
-		return nil // Ou retorne uma imagem padrão/vazia
+	if id == 0 {
+		return nil // Retorna nil para tiles vazios (ID 0)
 	}
-	return d.imgs[id]
+	adjustedID := id - d.gid
+	if adjustedID < 0 {
+		log.Printf("Warning: Tile ID %d is less than gid %d", id, d.gid)
+		return nil
+	}
+	if adjustedID >= len(d.imgs) {
+		log.Printf("Warning: Tile ID %d (adjusted: %d) is out of range for DynTileset (max: %d)", id, adjustedID, len(d.imgs)-1)
+		return nil
+	}
+	return d.imgs[adjustedID]
 }
 
 func NewTileset(path string, gid int) (Tileset, error) {
@@ -94,7 +121,7 @@ func NewTileset(path string, gid int) (Tileset, error) {
 			}
 			dynTileset.imgs = append(dynTileset.imgs, img)
 		}
-		log.Printf("Created DynTileset with %d images", len(dynTileset.imgs))
+		log.Printf("Created DynTileset with %d images, gid: %d", len(dynTileset.imgs), gid)
 		return &dynTileset, nil
 	}
 
@@ -116,6 +143,6 @@ func NewTileset(path string, gid int) (Tileset, error) {
 	uniformTileset.img = img
 	uniformTileset.gid = gid
 
-	log.Printf("Created UniformTileset with image: %s", tileJSONPath)
+	log.Printf("Created UniformTileset with image: %s, gid: %d", tileJSONPath, gid)
 	return &uniformTileset, nil
 }
